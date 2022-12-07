@@ -41,6 +41,8 @@ import org.json.JSONException;
 public class StatusBar extends CordovaPlugin {
     private static final String TAG = "StatusBar";
 
+    private boolean _isVisible = true;
+
     private static final String ACTION_HIDE = "hide";
     private static final String ACTION_SHOW = "show";
     private static final String ACTION_READY = "_ready";
@@ -70,7 +72,13 @@ public class StatusBar extends CordovaPlugin {
         activity = this.cordova.getActivity();
         window = activity.getWindow();
 
+        StatusBar statusbar = this;
+
         activity.runOnUiThread(() -> {
+            //https://github.com/apache/cordova-plugin-statusbar/issues/110
+            //This corrects keyboard behaviour when overlaysWebView is true
+            StatusBarViewHelper.assist(cordova.getActivity(), statusbar);
+
             // Clear flag FLAG_FORCE_NOT_FULLSCREEN which is set initially
             // by the Cordova.
             window.clearFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
@@ -86,6 +94,10 @@ public class StatusBar extends CordovaPlugin {
                 preferences.getString("StatusBarStyle", STYLE_LIGHT_CONTENT).toLowerCase()
             );
         });
+    }
+
+    public boolean isVisible() {
+        return _isVisible;
     }
 
     /**
@@ -117,6 +129,8 @@ public class StatusBar extends CordovaPlugin {
                     // CB-11197 We still need to update LayoutParams to force status bar
                     // to be hidden when entering e.g. text fields
                     window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
+                    _isVisible = true;
                 });
                 return true;
 
@@ -131,6 +145,8 @@ public class StatusBar extends CordovaPlugin {
                     // CB-11197 We still need to update LayoutParams to force status bar
                     // to be hidden when entering e.g. text fields
                     window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
+                    _isVisible = false;
                 });
                 return true;
 
